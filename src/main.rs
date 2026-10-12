@@ -1,15 +1,34 @@
-use std::env;
-use std::fs;
+use std::{env, process::ExitCode};
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args[1] == "init" {
-        fs::create_dir(".bs").unwrap();
-        fs::create_dir(".bs/objects").unwrap();
-        fs::create_dir(".bs/refs").unwrap();
-        fs::write(".bs/HEAD", "ref: refs/heads/master\n").unwrap();
-        println!("Initialized blobstore directory");
-    } else {
-        println!("unknown command: {}", args[1]);
+use blobstore::{cat_file::pretty_print, init::init};
+
+fn main() -> ExitCode {
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    match args.as_slice() {
+        [command] if command == "init" => match init() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("Command execution failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [command, flag, hash] if command == "cat-file" && flag == "-p" => {
+            match pretty_print(hash) {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("Command execution failed: {error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        [] => {
+            println!("usage: \n\tbs init\n\tbs cat-file\n");
+            ExitCode::SUCCESS
+        }
+        invalid => {
+            eprintln!("Invalid command: {}", invalid.join(" "));
+            ExitCode::FAILURE
+        }
     }
 }
