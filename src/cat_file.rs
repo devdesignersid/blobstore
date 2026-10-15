@@ -6,7 +6,20 @@ use std::{
 
 use flate2::read::ZlibDecoder;
 
+use crate::repo::repo_root;
+
 pub fn pretty_print(hash: &str) -> Result<(), io::Error> {
+    let repo_root_path = match repo_root() {
+        Ok(Some(path)) => path,
+        Ok(None) => {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Not a blobstore repo! Initialize bobstore using `bs init` command",
+            ));
+        }
+        Err(err) => return Err(io::Error::new(io::ErrorKind::Other, format!("{err}"))),
+    };
+
     if hash.len() < 3 || !hash.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
@@ -14,7 +27,8 @@ pub fn pretty_print(hash: &str) -> Result<(), io::Error> {
         ));
     }
 
-    let path = Path::new(".bs")
+    let path = Path::new(&repo_root_path)
+        .join(".bs")
         .join("objects")
         .join(&hash[..2])
         .join(&hash[2..]);

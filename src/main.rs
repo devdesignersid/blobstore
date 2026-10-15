@@ -1,6 +1,6 @@
 use std::{env, process::ExitCode};
 
-use blobstore::{cat_file::pretty_print, init::init};
+use blobstore::{cat_file::pretty_print, hash_object::hash_object, init::init};
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -15,6 +15,15 @@ fn main() -> ExitCode {
         },
         [command, flag, hash] if command == "cat-file" && flag == "-p" => {
             match pretty_print(hash) {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("Command execution failed: {error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        [command, flag, file_name] if command == "hash-object" && flag == "-w" => {
+            match hash_object(file_name) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(error) => {
                     eprintln!("Command execution failed: {error}");
