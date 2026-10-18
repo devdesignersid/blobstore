@@ -1,16 +1,13 @@
-use std::{
-    env, fs,
-    io::{self, Error, ErrorKind},
+use std::{env, fs};
+
+use crate::{
+    error::{BlobstoreError, Result},
+    repo::is_blobstore_repo,
 };
 
-use crate::repo::check_repo_initialized;
-
-pub fn init() -> Result<(), io::Error> {
-    if check_repo_initialized()? {
-        return Err(Error::new(
-            ErrorKind::AlreadyExists,
-            "Repo already initialized",
-        ));
+pub fn init() -> Result<()> {
+    if is_blobstore_repo()? {
+        return Err(BlobstoreError::RepoAlreadyInitialised);
     }
 
     let path = env::current_dir()?.join(".bs");

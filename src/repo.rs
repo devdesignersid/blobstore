@@ -1,43 +1,29 @@
-use std::{
-    env,
-    io::{
-        Error,
-        ErrorKind::{self},
-    },
-};
+use std::{env, path::PathBuf};
 
-pub fn repo_root() -> Result<Option<String>, Error> {
-    let mut curr_path = env::current_dir()?;
+use crate::error::{BlobstoreError, Result};
 
-    while curr_path.to_str().as_slice().len() > 0 {
-        if curr_path.join(".bs").exists() {
-            break;
+/// Returns the root directory of the repo
+pub fn repo_root() -> Result<Option<PathBuf>> {
+    let cwd = env::current_dir()?;
+
+    for path in cwd.ancestors() {
+        if path.join(".bs").exists() {
+            return Ok(Some(path.to_path_buf()));
         }
-
-        let parent = match curr_path.parent() {
-            Some(path) => path,
-            None => break,
-        };
-
-        curr_path = parent.to_path_buf();
     }
 
-    if curr_path.to_str().unwrap() == "/" {
-        return Ok(None);
-    }
+    Ok(None)
+}
 
-    match curr_path.into_string() {
-        Ok(str) => Ok(Some(str)),
-        _ => return Err(Error::new(ErrorKind::InvalidData, "Invalid path")),
+/// Returns `true` if the blobstore is initialised else will return `false`
+pub fn is_blobstore_repo() -> Result<bool> {
+    match repo_root()? {
+        Some(_) => Ok(true),
+        None => Ok(false),
     }
 }
 
-pub fn check_repo_initialized() -> Result<bool, Error> {
-    let is_repo_initialized = match repo_root() {
-        Ok(Some(_)) => true,
-        Ok(None) => false,
-        Err(err) => return Err(Error::new(ErrorKind::Other, format!("{err}"))),
-    };
-
-    Ok(is_repo_initialized)
+/// Use when an initialized repo root is required
+pub fn required_repo_root() -> Result<PathBuf> {
+    repo_root()?.ok_or(BlobstoreError::NotInRepository)
 }
