@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    env, fs,
     io::{self, ErrorKind, Read, Write},
 };
 
@@ -16,7 +16,8 @@ pub fn pretty_print(hash: &str) -> Result<()> {
     let directory = &hash[..2];
     let file_name = &hash[2..];
 
-    let root = required_repo_root()?;
+    let cwd = env::current_dir()?;
+    let root = required_repo_root(&cwd)?;
     let path = root
         .join(".bs")
         .join("objects")

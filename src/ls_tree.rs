@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    env, fs,
     io::{self, Read, Write, stdout},
 };
 
@@ -12,7 +12,8 @@ use crate::{
 };
 
 pub fn ls_tree(hash: &str) -> Result<()> {
-    let root = required_repo_root()?;
+    let cwd = env::current_dir()?;
+    let root = required_repo_root(&cwd)?;
 
     let directory = &hash[..2];
     let file_name = &hash[2..];

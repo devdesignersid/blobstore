@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    env, fs,
     io::{self, Read, Write},
     path::Path,
 };
@@ -14,7 +14,8 @@ use crate::{
 };
 
 pub fn hash_object(file_name: &str) -> Result<()> {
-    let root = required_repo_root()?;
+    let cwd = env::current_dir()?;
+    let root = required_repo_root(&cwd)?;
     let path = Path::new(file_name);
 
     let mut contents: Vec<u8> = Vec::new();
